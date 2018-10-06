@@ -1,0 +1,51 @@
+FROM lambci/lambda:go1.x
+FROM golang:1.10.0
+
+# required to be passed in
+ARG SERVICE_PATH
+ARG APP_PATH
+ARG INSTALL_PATH=/go
+ARG LOCAL_USER=go
+
+WORKDIR $INSTALL_PATH/$APP_PATH
+
+# Install Nodejs
+RUN curl -sL https://deb.nodesource.com/setup_9.x | bash -
+RUN apt-get install -y nodejs
+
+# Install Serverless
+RUN npm i -g serverless
+
+# Install python
+RUN apt-get install -y -qq python-pip
+
+# Install AWS SAM CLI
+ENV PATH=$PATH:/root/.local/bin
+RUN pip install --user aws-sam-cli
+
+# Comment out if starting a new project
+###################################################
+COPY $SERVICE_PATH/$APP_PATH/package.json /go/$APP_PATH/package.json
+COPY $SERVICE_PATH/$APP_PATH/package-lock.json /go/$APP_PATH/package-lock.json
+RUN npm install
+###################################################
+
+# copy project to container
+COPY $SERVICE_PATH/. $INSTALL_PATH/.
+
+# Install dep
+ENV INSTALL_DIRECTORY=/usr/local/bin
+RUN curl https://raw.githubusercontent.com/golang/dep/master/install.sh | sh
+
+# Comment out if starting a new project
+###################################################
+RUN make
+###################################################
+
+# Install global packages with local user
+RUN useradd -ms /bin/bash $LOCAL_USER
+RUN usermod -aG sudo $LOCAL_USER
+# can't set user... SAM: Got permission denied while trying to connect to the Docker daemon socket at unix:///var/run/docker.sock: Get http://%2Fvar%2Frun%2Fdocker.sock/_ping: dial unix /var/run/docker.sock: connect: permission denied
+#USER $LOCAL_USER
+
+CMD ["npm", "start"]
