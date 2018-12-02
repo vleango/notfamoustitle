@@ -1,5 +1,11 @@
 require 'json'
+require 'active_support/all'
 
 def hello(event:, context:)
-  { statusCode: 200, body: JSON.generate('Go Serverless v1.0! Your function executed successfully!') }
+  body = {
+    title: 'Go Serverless v1.0! Your function executed successfully!',
+    date: Date.current
+  }
+
+  { statusCode: 200, body: JSON.generate(body) }
 end
