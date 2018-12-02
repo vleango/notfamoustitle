@@ -31,3 +31,19 @@ services:
       - ./services/web-react/build:/go/src/github.com/vleango/client/dist
     env_file:
       - config/environments/.aws.env
+  lambda-ruby:
+    build:
+      context: .
+      dockerfile: ./config/dockerfiles/Dockerfile-lambda-ruby
+      args:
+        SERVICE_PATH: ./services/lambda-ruby
+        APP_PATH: ./services/lambda-ruby
+    command: sam local start-api --docker-network notfamoustitle_default --docker-volume-basedir "$PWD/services/lambda-ruby" --host 0.0.0.0
+    ports:
+      - '5000:3000'
+    volumes:
+      - /var/run/docker.sock:/var/run/docker.sock
+      - ./config/aws:/root/.aws
+      - ./services/lambda-ruby:/ruby
+    env_file:
+      - config/environments/.aws.env
